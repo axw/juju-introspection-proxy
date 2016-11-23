@@ -1,0 +1,109 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "hveFTNQ9YEyYRs6SWuXM+XU9qRI=",
+			"path": "github.com/fsnotify/fsnotify",
+			"revision": "fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197",
+			"revisionTime": "2016-10-26T20:31:22Z"
+		},
+		{
+			"checksumSHA1": "b4Bd+o7lqSpiJr8eYHrfn6Y5iPE=",
+			"path": "github.com/juju/ansiterm",
+			"revision": "b99631de12cf04a906c1d4e4ec54fb86eae5863d",
+			"revisionTime": "2016-09-07T23:45:32Z"
+		},
+		{
+			"checksumSHA1": "u/QxyWuXuN/6T9pII5ax2LnVbqU=",
+			"path": "github.com/juju/ansiterm/tabwriter",
+			"revision": "b99631de12cf04a906c1d4e4ec54fb86eae5863d",
+			"revisionTime": "2016-09-07T23:45:32Z"
+		},
+		{
+			"checksumSHA1": "xQWbK7oaVb7hwpXc5WjHpZ4W2M8=",
+			"path": "github.com/juju/errors",
+			"revision": "1b5e39b83d1835fa480e0c2ddefb040ee82d58b3",
+			"revisionTime": "2015-09-16T12:56:42Z"
+		},
+		{
+			"checksumSHA1": "WttBhWbKX60YUiSiyF+mQKpfdVo=",
+			"path": "github.com/juju/loggo",
+			"revision": "3b7ece48644d35850f4ced4c2cbc2cf8413f58e0",
+			"revisionTime": "2016-08-18T02:57:24Z"
+		},
+		{
+			"checksumSHA1": "MXtPQZGsAEdHwqCcl3AfXJhIjp0=",
+			"path": "github.com/juju/names",
+			"revision": "e287fe4ae0dbda220cace3ed0e35cda4796c1aa3",
+			"revisionTime": "2015-10-22T17:21:35Z"
+		},
+		{
+			"checksumSHA1": "e9uNmsZ6+5wgoqQst5tMhZhqylY=",
+			"path": "github.com/juju/utils",
+			"revision": "a84e60da6d18975eaff902cd51922b4da470dd62",
+			"revisionTime": "2016-11-10T13:52:25Z"
+		},
+		{
+			"checksumSHA1": "CEj9efal05UefJa0E6s1Uskv5XU=",
+			"path": "github.com/juju/utils/clock",
+			"revision": "a84e60da6d18975eaff902cd51922b4da470dd62",
+			"revisionTime": "2016-11-10T13:52:25Z"
+		},
+		{
+			"checksumSHA1": "i9VUhzmNRF4jDTwpDuAgoAru+k0=",
+			"path": "github.com/juju/utils/set",
+			"revision": "a84e60da6d18975eaff902cd51922b4da470dd62",
+			"revisionTime": "2016-11-10T13:52:25Z"
+		},
+		{
+			"checksumSHA1": "WdtSpBRqmfrqXfWGJhsh8qIdbSU=",
+			"path": "github.com/julienschmidt/httprouter",
+			"revision": "77a895ad01ebc98a4dc95d8355bc825ce80a56f6",
+			"revisionTime": "2015-10-13T22:55:20Z"
+		},
+		{
+			"checksumSHA1": "0nXta8PKYGYicKWeydn0A7ELKcs=",
+			"path": "github.com/lunixbochs/vtclean",
+			"revision": "4fbf7632a2c6d3fbdb9931439bdbbeded02cbe36",
+			"revisionTime": "2016-01-25T03:51:06Z"
+		},
+		{
+			"checksumSHA1": "ZAlzPBSsaGe/k5pbISRQvSiVhfc=",
+			"path": "github.com/mattn/go-colorable",
+			"revision": "ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8",
+			"revisionTime": "2016-07-31T23:54:17Z"
+		},
+		{
+			"checksumSHA1": "xZuhljnmBysJPta/lMyYmJdujCg=",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8",
+			"revisionTime": "2016-08-06T12:27:52Z"
+		},
+		{
+			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
+			"path": "golang.org/x/crypto/pbkdf2",
+			"revision": "8e06e8ddd9629eb88639aba897641bff8031f1d3",
+			"revisionTime": "2016-09-10T18:59:01Z"
+		},
+		{
+			"checksumSHA1": "98OIQdhmszXmXdiLjOYs2jdxhpU=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "3dec8fc77cf0b9e8ecfbc701285a63360b05b71c",
+			"revisionTime": "2015-05-12T03:05:38Z"
+		},
+		{
+			"checksumSHA1": "rRMQJGnYQrtf+ITKZZuU68iBz1M=",
+			"path": "gopkg.in/juju/names.v2",
+			"revision": "3317ff7471a685109e262892b5f81b940ad5782f",
+			"revisionTime": "2016-10-05T07:27:06Z"
+		},
+		{
+			"checksumSHA1": "+OgOXBoiQ+X+C2dsAeiOHwBIEH0=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "a83829b6f1293c91addabc89d0571c246397bbf4",
+			"revisionTime": "2016-03-01T20:40:22Z"
+		}
+	],
+	"rootPath": "github.com/axw/juju-introspection-proxy"
+}
