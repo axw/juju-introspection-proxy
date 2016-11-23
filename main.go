@@ -32,7 +32,7 @@ func Main() error {
 	agents := agentsHandler{
 		rp: httputil.ReverseProxy{
 			Director:  agentDirector,
-			Transport: agentTransport,
+			Transport: newAgentTransport(),
 		},
 		agents: make(set.Strings),
 	}
@@ -127,14 +127,36 @@ func agentDirector(req *http.Request) {
 	}
 }
 
-var agentTransport = &http.Transport{
-	Dial: func(proto, addr string) (net.Conn, error) {
-		tag, _, err := net.SplitHostPort(addr)
-		if err != nil {
-			return nil, err
-		}
-		return net.Dial("unix", agentSocket(tag))
-	},
+type agentTransport struct {
+	http.Transport
+}
+
+func newAgentTransport() *agentTransport {
+	return &agentTransport{
+		http.Transport{
+			Dial: func(proto, addr string) (net.Conn, error) {
+				tag, _, err := net.SplitHostPort(addr)
+				if err != nil {
+					return nil, err
+				}
+				return net.Dial("unix", agentSocket(tag))
+			},
+		},
+	}
+}
+
+func (t *agentTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	resp, err := t.Transport.RoundTrip(r)
+	if err != nil {
+		return nil, err
+	}
+	prefix := fmt.Sprintf("/agents/%s", r.URL.Host)
+	loc := resp.Header.Get("Location")
+	if strings.HasPrefix(loc, "/") {
+		loc = prefix + loc
+		resp.Header.Set("Location", loc)
+	}
+	return resp, nil
 }
 
 func agentSocket(tag string) string {
