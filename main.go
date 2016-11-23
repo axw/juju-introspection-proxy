@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -19,6 +20,8 @@ import (
 	"github.com/juju/names"
 	"github.com/juju/utils/set"
 	"github.com/julienschmidt/httprouter"
+	"golang.org/x/net/context"
+	"golang.org/x/sync/errgroup"
 )
 
 const defaultAddr = ":19090"
@@ -26,6 +29,7 @@ const defaultAddr = ":19090"
 var (
 	agentsDirFlag = flag.String("d", "/var/lib/juju/agents", "Path to Juju agents directory")
 	addrFlag      = flag.String("addr", defaultAddr, "Address to listen for connections on")
+	hook          = flag.String("hook", "", "Path to a command to execute when an agent is added or removed.")
 )
 
 func Main() error {
@@ -43,12 +47,19 @@ func Main() error {
 	}
 	defer watcher.Close()
 
-	go watchAgents(&agents, watcher)
-
-	if err := serveHTTP(&agents); err != nil {
+	g, ctx := errgroup.WithContext(context.Background())
+	g.Go(func() error {
+		// Watch for addition and removal of agents, and fire hooks.
+		// If a hook fails, then the process will exit with an error.
+		// This gives us a way of guaranteeing delivery of hooks.
+		err := watchAgents(&agents, watcher, ctx)
+		return errors.Annotate(err, "watching agents")
+	})
+	g.Go(func() error {
+		err := serveHTTP(&agents, ctx)
 		return errors.Annotate(err, "serving HTTP")
-	}
-	return nil
+	})
+	return g.Wait()
 }
 
 type agentsHandler struct {
@@ -58,18 +69,43 @@ type agentsHandler struct {
 	agents set.Strings
 }
 
-func (h *agentsHandler) addAgent(tag string) {
+func (h *agentsHandler) addAgent(tag string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if h.agents.Contains(tag) {
+		return nil
+	}
+	if err := h.runHook("add", tag); err != nil {
+		return errors.Trace(err)
+	}
 	h.agents.Add(tag)
 	log.Println("Agent added:", tag)
+	return nil
 }
 
-func (h *agentsHandler) removeAgent(tag string) {
+func (h *agentsHandler) removeAgent(tag string) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if !h.agents.Contains(tag) {
+		return nil
+	}
+	if err := h.runHook("remove", tag); err != nil {
+		return errors.Trace(err)
+	}
 	h.agents.Remove(tag)
 	log.Println("Agent removed:", tag)
+	return nil
+}
+
+func (h *agentsHandler) runHook(op, agent string) error {
+	if *hook == "" {
+		return nil
+	}
+	cmd := exec.Command(*hook, op, agent)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	return errors.Annotatef(err, "running hook: %q %q", *hook, op+" "+agent)
 }
 
 func (h *agentsHandler) hasAgent(tag string) bool {
@@ -150,9 +186,10 @@ func (t *agentTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	prefix := fmt.Sprintf("/agents/%s", r.URL.Host)
+	// Rewrite the Location header to be relative to the agent root.
 	loc := resp.Header.Get("Location")
 	if strings.HasPrefix(loc, "/") {
+		prefix := fmt.Sprintf("/agents/%s", r.URL.Host)
 		loc = prefix + loc
 		resp.Header.Set("Location", loc)
 	}
@@ -191,15 +228,24 @@ func initAgents(agents *agentsHandler) (*fsnotify.Watcher, error) {
 			log.Printf("ERROR: %s", err)
 			continue
 		}
-		agents.addAgent(name)
+		if err := agents.addAgent(name); err != nil {
+			watcher.Close()
+			return nil, err
+		}
 	}
 
 	return watcher, nil
 }
 
-func watchAgents(agents *agentsHandler, watcher *fsnotify.Watcher) {
+func watchAgents(
+	agents *agentsHandler,
+	watcher *fsnotify.Watcher,
+	ctx context.Context,
+) error {
 	for {
 		select {
+		case <-ctx.Done():
+			return ctx.Err()
 		case event := <-watcher.Events:
 			name := filepath.Base(event.Name)
 			if _, err := names.ParseTag(name); err != nil {
@@ -208,9 +254,13 @@ func watchAgents(agents *agentsHandler, watcher *fsnotify.Watcher) {
 			}
 			switch event.Op {
 			case fsnotify.Create:
-				agents.addAgent(name)
+				if err := agents.addAgent(name); err != nil {
+					return errors.Trace(err)
+				}
 			case fsnotify.Remove:
-				agents.removeAgent(name)
+				if err := agents.removeAgent(name); err != nil {
+					return errors.Trace(err)
+				}
 			}
 		case err := <-watcher.Errors:
 			log.Println("ERROR:", err)
@@ -218,12 +268,27 @@ func watchAgents(agents *agentsHandler, watcher *fsnotify.Watcher) {
 	}
 }
 
-func serveHTTP(agents *agentsHandler) error {
+func serveHTTP(agents *agentsHandler, ctx context.Context) error {
 	router := httprouter.New()
 	router.GET("/agents/:tag", agents.GetAgent)
 	router.GET("/agents/:tag/*path", agents.GetAgent)
 	router.GET("/agents", agents.ListAgents)
-	return errors.Trace(http.ListenAndServe(*addrFlag, router))
+
+	server := http.Server{
+		Addr:    *addrFlag,
+		Handler: router,
+	}
+	listener, err := net.Listen("tcp", *addrFlag)
+	if err != nil {
+		return errors.Annotate(err, "creating listener")
+	}
+	defer listener.Close()
+
+	go func() {
+		<-ctx.Done()
+		listener.Close()
+	}()
+	return errors.Trace(server.Serve(listener))
 }
 
 func main() {
