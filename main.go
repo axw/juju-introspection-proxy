@@ -114,6 +114,17 @@ func (h *agentsHandler) hasAgent(tag string) bool {
 	return h.agents.Contains(tag)
 }
 
+func (h *agentsHandler) findAgent(contains string) string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for _, agent := range h.agents.SortedValues() {
+		if strings.Contains(agent, contains) {
+			return agent
+		}
+	}
+	return ""
+}
+
 func (h *agentsHandler) currentAgents() []string {
 	h.mu.Lock()
 	defer h.mu.Unlock()
@@ -126,6 +137,12 @@ func (h *agentsHandler) GetAgent(w http.ResponseWriter, r *http.Request, ps http
 		http.Error(w, fmt.Sprintf("agent %q not found", tag), http.StatusNotFound)
 		return
 	}
+	h.rp.ServeHTTP(w, r)
+}
+
+func (h *agentsHandler) GetMachine(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tag := h.findAgent("machine-")
+	r.URL.Path = fmt.Sprintf("/agents/%s/metrics", tag)
 	h.rp.ServeHTTP(w, r)
 }
 
@@ -273,6 +290,7 @@ func serveHTTP(agents *agentsHandler, ctx context.Context) error {
 	router.GET("/agents/:tag", agents.GetAgent)
 	router.GET("/agents/:tag/*path", agents.GetAgent)
 	router.GET("/agents", agents.ListAgents)
+	router.GET("/metrics", agents.GetMachine)
 
 	server := http.Server{
 		Addr:    *addrFlag,
