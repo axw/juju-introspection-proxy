@@ -1,0 +1,29 @@
+name: juju-introspection-proxy
+version: 1
+summary: A proxy to Juju internal metrics
+description: |
+  Allows scraping of Juju internal metrics by Prometheus
+confinement: classic
+grade: stable
+apps:
+  juju-introspection-proxy:
+    command: 'bin/juju-introspection-proxy.wrapper'
+    plugs: [network-bind, network]
+    daemon: simple
+parts:
+  juju-introspection-proxy:
+    plugin: go
+    source: https://github.com/axw/juju-introspection-proxy.git
+    go-importpath: github.com/axw/juju-introspection-proxy
+  snap-wrappers:
+    plugin: dump
+    source: .
+    organize:
+      snap_config_wrapper: bin/juju-introspection-proxy.wrapper
+      daemon_arguments: etc/juju-introspection-proxy/daemon_arguments.example
+    stage:
+      - bin/juju-introspection-proxy.wrapper
+      - etc/juju-introspection-proxy/daemon_arguments.example
+    prime:
+      - bin/juju-introspection-proxy.wrapper
+      - etc/juju-introspection-proxy/daemon_arguments.example
