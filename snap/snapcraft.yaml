@@ -17,7 +17,7 @@ parts:
     go-importpath: github.com/axw/juju-introspection-proxy
   snap-wrappers:
     plugin: dump
-    source: .
+    source: snap/
     organize:
       snap_config_wrapper: bin/juju-introspection-proxy.wrapper
       daemon_arguments: etc/juju-introspection-proxy/daemon_arguments.example
